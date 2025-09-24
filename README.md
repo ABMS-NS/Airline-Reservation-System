@@ -179,7 +179,7 @@ Desenvolvido para a disciplina de Projeto de Software - 2025.1
 
 ---
 
-**Última atualização**: Setembro 2025
-**Versão**: 2.0 - Sistema de Fidelidade Implementado
-**Feito por**: Alison Bruno Martires Soares
-**Refatorado de**: Ycaro
+- **Última atualização**: Setembro 2025
+- **Versão**: 2.0 - Sistema de Fidelidade Implementado
+- **Feito por**: Alison Bruno Martires Soares
+- **Refatorado de**: Ycaro
