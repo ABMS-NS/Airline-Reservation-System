@@ -19,8 +19,10 @@ class LoyaltyManager(BaseModel):
         self.points += amount
 
     def spend_points(self, amount: int):
-        if amount >= 0:
-            raise ValueError("Loyalty points gained amount must not be negative")
+        if amount < 0:
+            raise ValueError("Amount must be positive")
+        if amount > self.points:
+            raise ValueError("Insufficient loyalty points")
         self.points -= amount
 
 

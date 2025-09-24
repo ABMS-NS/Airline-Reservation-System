@@ -28,3 +28,4 @@ typing-inspection==0.4.1
 typing_extensions==4.14.1
 uc-micro-py==1.0.3
 wcwidth==0.2.13
+questionary==2.1.1

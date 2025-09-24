@@ -23,13 +23,11 @@ class User(BaseModel):
     def __init__(self, username: str, *args, **kwargs) -> None:
         super().__init__(username=username, *args, **kwargs)
 
-    # @classmethod
-    # def get_by_username(cls, customer_username: str):
-    #     for v in cls.repository.list():
-    #         if v is None:
-    #             continue
-    #
-    #         if v.username == customer_username:
-    #             return v
-    #
-    #     return None
+    @classmethod
+    def get_by_username(cls, customer_username: str):
+        for v in cls.repository.list():
+            if v is None:
+                continue
+            if v.username == customer_username:
+                return v
+        return None
