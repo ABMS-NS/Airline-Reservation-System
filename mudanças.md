@@ -1,2 +1,4 @@
 - Atualização dos requisites (adição do questionaryes)
-- 
+- Correção do costumer.py (spend points)
+- corrigido o bug de login em user.py (parte comentada reposta e corrigida)
+- criação do sistema de fidelidade (loyalty system)
