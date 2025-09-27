@@ -12,8 +12,10 @@ class BaseModel(pydantic.BaseModel):
         return super().__init_subclass__(**kwargs)
 
     def __init__(self, *args, **kwargs):
-        id: int = self.repository.save(self)
-        super().__init__(id=id, *args, **kwargs)
+        #inicializa com um ID temporário
+        super().__init__(id=-1, *args, **kwargs)
+        #salva no repository e atualiza o ID
+        self.id = self.repository.save(self)
 
     @classmethod
     def get(cls, id: int) -> Self | None:

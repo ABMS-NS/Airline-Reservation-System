@@ -1,14 +1,13 @@
 from typing import ClassVar
-import pydantic
 from ycaro_airlines.models.base_model import BaseModel
 
-# from ycaro_airlines.models.customer_service import Issue
 import ycaro_airlines.models.customer_service as customer_service
 from ycaro_airlines.models.user import Roles, User
 
+from pydantic import BaseModel as PydanticBaseModel  # Renomear import
 
-class LoyaltyManager(BaseModel):
-    points: int
+class LoyaltyManager(PydanticBaseModel):
+    points: int = 0
 
     def __init__(self, *args, **kwargs):
         super().__init__(points=0, *args, **kwargs)
