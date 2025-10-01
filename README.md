@@ -17,9 +17,9 @@ Sistema de reservas de companhia aérea com interface de linha de comando, imple
 - **Reservas Multi-Cidade**: Voos com múltiplas conexões
 - **Sistema de Fidelidade**: Ganho e uso de pontos de fidelidade
 - **Programa de Fidelidade**: Sistema básico funcional, resgate de prêmios implementado
+- **Atendimento ao Cliente**: Estrutura de tickets criada, chat básico
 
 ### ⚠️ Parcialmente Implementadas
-- **Atendimento ao Cliente**: Estrutura de tickets criada, chat básico
 - **Pedidos Especiais**: Interface criada, funcionalidade em desenvolvimento
 
 ## Requisitos do Sistema
