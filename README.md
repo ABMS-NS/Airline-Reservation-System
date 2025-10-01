@@ -16,9 +16,9 @@ Sistema de reservas de companhia aérea com interface de linha de comando, imple
 - **Informações de Bagagem**: Taxas e políticas de bagagem
 - **Reservas Multi-Cidade**: Voos com múltiplas conexões
 - **Sistema de Fidelidade**: Ganho e uso de pontos de fidelidade
+- **Programa de Fidelidade**: Sistema básico funcional, resgate de prêmios implementado
 
 ### ⚠️ Parcialmente Implementadas
-- **Programa de Fidelidade**: Sistema básico funcional, resgate de prêmios implementado
 - **Atendimento ao Cliente**: Estrutura de tickets criada, chat básico
 - **Pedidos Especiais**: Interface criada, funcionalidade em desenvolvimento
 
