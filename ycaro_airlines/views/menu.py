@@ -7,6 +7,7 @@ from ycaro_airlines.models.user import User
 
 # TODO: implement composite pattern
 class UIView(ABC):
+#Classe abstrata que define o template
     title: str = ""
 
     def __init_subclass__(cls, title: str = "") -> None:
@@ -17,7 +18,7 @@ class UIView(ABC):
         self.__user: User | None = user
 
     @abstractmethod
-    def operation(self) -> "UIView | None":
+    def operation(self) -> "UIView | None": # Método abstrato que subclasses implementam
         pass
 
     @property
@@ -37,7 +38,7 @@ class UIView(ABC):
         self.__user = value
 
 
-class MenuView(UIView, ABC):
+class MenuView(UIView, ABC): #Utiliza o template
     def __init__(
         self,
         user: User | None = None,
@@ -75,7 +76,7 @@ class MenuView(UIView, ABC):
             o.parent = self
 
 
-class ActionView(UIView, ABC):
+class ActionView(UIView, ABC): #Outra implementação do template
     @abstractmethod
     def operation(self) -> UIView | None:
         pass

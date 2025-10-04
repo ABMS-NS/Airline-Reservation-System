@@ -22,6 +22,9 @@ Sistema de reservas de companhia aérea com interface de linha de comando, imple
 ### ⚠️ Parcialmente Implementadas
 - **Pedidos Especiais**: Interface criada, funcionalidade em desenvolvimento
 
+## Padrões Comportamentais Implementados
+- **Template Method**: views/menu.py
+
 ## Requisitos do Sistema
 
 - Python 3.8+
