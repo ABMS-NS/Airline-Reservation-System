@@ -24,6 +24,7 @@ Sistema de reservas de companhia aérea com interface de linha de comando, imple
 
 ## Padrões Comportamentais Implementados
 - **Template Method**: views/menu.py
+- **Strategy Method e um pouco de Template**: models/flights.py e strategy/
 
 ## Requisitos do Sistema
 
