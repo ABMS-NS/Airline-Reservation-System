@@ -1,23 +1,24 @@
 from abc import ABC, abstractmethod
-from typing import List
-from ycaro_airlines.models.flight import Flight
+from typing import List, TYPE_CHECKING
 
-# interface Strategy - define o contrato que todas as estratégias devem seguir
+# TYPE_CHECKING é True apenas durante verificação de tipos, não em runtime
+if TYPE_CHECKING:
+    from ycaro_airlines.models.flight import Flight
+
 class FlightFilterStrategy(ABC):
     """
-    Interface abstrata para estratégias de filtro de voos.
-    Cada estratégia concreta implementa um critério diferente de filtro.
+    Interface abstrata para estratégias de filtro.
     """
     
     @abstractmethod
-    def filter(self, flights: List[Flight]) -> List[Flight]:
+    def filter(self, flights: List["Flight"]) -> List["Flight"]:  #usando string para type hint
         """
         Método abstrato que todas as estratégias devem implementar.
         
         Args:
             flights: Lista de voos a serem filtrados
             
-        Returns:    
+        Returns:
             Lista filtrada de voos
         """
         pass
