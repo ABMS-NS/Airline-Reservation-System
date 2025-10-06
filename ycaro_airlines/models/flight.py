@@ -4,7 +4,15 @@ from itertools import count
 from math import inf
 from random import randint, sample
 from typing import Dict
-
+from ycaro_airlines.strategies.concrete_filters import (
+    CityFilterStrategy,
+    PriceFilterStrategy,
+    DepartureDateFilterStrategy,
+    ArrivalDateFilterStrategy,
+    FlightIdFilterStrategy,
+    CompositeFilterStrategy
+)
+from ycaro_airlines.strategies.flight_filter_context import FlightFilterContext
 from rich.table import Table
 from rich.console import Console
 from typing import (
@@ -162,39 +170,70 @@ class Flight:
 
     @classmethod
     def list_flights(cls, **query: Unpack[FlightQueryParams]) -> List["Flight"]:
-        filtered_list: List[Flight] = list(cls.flights.values())
-
+        """
+        Lista voos aplicando filtros usando Strategy Pattern.
+        """
+        all_flights = list(cls.flights.values())
+        
+        # Se não há filtros, retorna todos
+        if not query:
+            return all_flights
+        
+        # Cria estratégia composta para combinar múltiplos filtros
+        composite = CompositeFilterStrategy()
+        
+        # Adiciona filtro de ID se especificado (tem prioridade)
         if flight_id := query.get("flight_id"):
-            return [i for i in filtered_list if i.id == flight_id]
-
-        if query.get("date_arrival_gte") or query.get("date_arrival_lte"):
-            filtered_list = filter_by_date(
-                filtered_list,
-                date_lte=query.get("date_arrival_lte"),
-                date_gte=query.get("date_arrival_gte"),
-            )
-
-        if query.get("date_departure_gte") or query.get("date_departure_lte"):
-            filtered_list = filter_by_date(
-                filtered_list,
-                date_lte=query.get("date_departure_lte"),
-                date_gte=query.get("date_departure_gte"),
-                departure=True,
-            )
-
-        if query.get("price_lte") or query.get("price_lte"):
-            filtered_list = filter_by_price(
-                filtered_list,
-                price_lte=query.get("price_lte"),
-                price_gte=query.get("price_gte"),
-            )
-
+            composite.add_strategy(FlightIdFilterStrategy(flight_id))
+            # Se filtrando por ID, aplica e retorna imediatamente
+            context = FlightFilterContext(composite)
+            return context.apply_filter(all_flights)
+        
+        # Adiciona filtro de cidade se especificado
         if query.get("city_from") or query.get("city_to"):
-            filtered_list = filter_by_city(
-                filtered_list, From=query.get("city_from"), To=query.get("city_to")
+            composite.add_strategy(
+                CityFilterStrategy(
+                    from_city=query.get("city_from"),
+                    to_city=query.get("city_to")
+                )
             )
-
-        return list(filtered_list)
+        
+        # Adiciona filtro de preço se especificado
+        if query.get("price_gte") is not None or query.get("price_lte") is not None:
+            composite.add_strategy(
+                PriceFilterStrategy(
+                    min_price=query.get("price_gte", 0),
+                    max_price=query.get("price_lte", float('inf'))
+                )
+            )
+        
+        # Adiciona filtro de data de partida se especificado
+        if query.get("date_departure_gte") or query.get("date_departure_lte"):
+            composite.add_strategy(
+                DepartureDateFilterStrategy(
+                    start_date=query.get("date_departure_gte"),
+                    end_date=query.get("date_departure_lte")
+                )
+            )
+        
+        # Adiciona filtro de data de chegada se especificado
+        if query.get("date_arrival_gte") or query.get("date_arrival_lte"):
+            composite.add_strategy(
+                ArrivalDateFilterStrategy(
+                    start_date=query.get("date_arrival_gte"),
+                    end_date=query.get("date_arrival_lte")
+                )
+            )
+        
+        # Cria contexto e aplica os filtros
+        context = FlightFilterContext(composite)
+        filtered_flights = context.apply_filter(all_flights)
+        
+        # Log para debugging (opcional)
+        print(f"Filtros aplicados: {context.get_description()}")
+        print(f"Voos encontrados: {len(filtered_flights)}")
+        
+        return filtered_flights
 
     @classmethod
     def print_flights_table(
@@ -244,53 +283,53 @@ class Flight:
         console.print(table)
 
 
-def filter_by_city(
-    flights: List[Flight], From: Optional[str] = None, To: Optional[str] = None
-):
-    filtered_list = flights
+#def filter_by_city(
+#   flights: List[Flight], From: Optional[str] = None, To: Optional[str] = None
+#):
+#    filtered_list = flights
 
-    if From is not None:
-        filtered_list = [x for x in filtered_list if x.From == From]
+#    if From is not None:
+#        filtered_list = [x for x in filtered_list if x.From == From]
 
-    if To is not None:
-        filtered_list = [x for x in filtered_list if x.To == To]
+#    if To is not None:
+#        filtered_list = [x for x in filtered_list if x.To == To]
 
-    return filtered_list
-
-
-def filter_by_date(
-    flights: list[Flight],
-    date_lte: Optional[datetime] = None,
-    date_gte: Optional[datetime] = None,
-    departure: bool = False,
-):
-    filtered_list = flights
-    if not date_lte:
-        date_lte = datetime.max
-    if not date_gte:
-        date_gte = datetime.min
-
-    if departure:
-        filtered_list = [
-            x for x in filtered_list if date_gte <= x.departure <= date_lte
-        ]
-    else:
-        filtered_list = [x for x in filtered_list if date_gte <= x.arrival <= date_lte]
-
-    return filtered_list
+#    return filtered_list
 
 
-def filter_by_price(
-    flights: list[Flight],
-    price_lte: Optional[float] = None,
-    price_gte: Optional[float] = None,
-):
-    if not price_lte:
-        price_lte = inf
+#def filter_by_date(
+#   flights: list[Flight],
+#    date_lte: Optional[datetime] = None,
+#    date_gte: Optional[datetime] = None,
+#    departure: bool = False,
+#):
+#    filtered_list = flights
+#    if not date_lte:
+#        date_lte = datetime.max
+#    if not date_gte:
+#        date_gte = datetime.min
+#
+#    if departure:
+#        filtered_list = [
+#            x for x in filtered_list if date_gte <= x.departure <= date_lte
+#        ]
+#    else:
+#        filtered_list = [x for x in filtered_list if date_gte <= x.arrival <= date_lte]
+#
+#    return filtered_list
 
-    if not price_gte:
-        price_gte = 0
 
-    filtered_list = [x for x in flights if price_lte >= x.price >= price_gte]
+#def filter_by_price(
+#    flights: list[Flight],
+#    price_lte: Optional[float] = None,
+#    price_gte: Optional[float] = None,
+#):
+#    if not price_lte:
+#        price_lte = inf
 
-    return filtered_list
+#   if not price_gte:
+#        price_gte = 0
+
+#    filtered_list = [x for x in flights if price_lte >= x.price >= price_gte]
+#
+#   return filtered_list
