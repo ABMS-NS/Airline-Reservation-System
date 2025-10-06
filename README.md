@@ -19,9 +19,6 @@ Sistema de reservas de companhia aérea com interface de linha de comando, imple
 - **Programa de Fidelidade**: Sistema básico funcional, resgate de prêmios implementado
 - **Atendimento ao Cliente**: Estrutura de tickets criada, chat básico
 
-### ⚠️ Parcialmente Implementadas
-- **Pedidos Especiais**: Interface criada, funcionalidade em desenvolvimento
-
 ## Padrões Comportamentais Implementados
 - **Template Method**: views/menu.py
 - **Strategy Method e um pouco de Template**: models/flights.py e strategy/
