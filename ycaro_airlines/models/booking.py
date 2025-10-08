@@ -1,36 +1,46 @@
 from enum import Enum, auto
+from typing import TypeAlias
 from pydantic import Field
 from ycaro_airlines.models.base_model import BaseModel
 from ycaro_airlines.models.flight import Flight, stringify_date
 from rich.table import Table
 from rich.console import Console
 
-#importar estados
+# importar estados
 from ycaro_airlines.states.booking_state import (
-    BookingState, 
-    BookedState, 
-    CheckedInState, 
+    BookingState,
+    BookedState,
+    CheckedInState,
     CancelledState
 )
 
-# Manter enum por compatibilidade (mas não usar mais) (não sei se tirar vai quebrar o código)
+
+# Manter enum por compatibilidade (mas não usar mais) (MUDAR DEPOIS)
 class BookingStatus(Enum):
     booked = 1
     checked_in = auto()
     cancelled = auto()
 
-type customer_id = int
+
+CustomerID: TypeAlias = int
+
 
 class Booking(BaseModel):
+    model_config = {
+        "arbitrary_types_allowed": True  #permite armazenar BookingState
+    }
+
     flight_id: int
     owner_id: int
     price: float
     seat_id: int | None
     passenger_name: str
     passenger_cpf: str
+
     #ADICIONADO PARA O STATE OBJECT
     state: BookingState = Field(default_factory=BookedState, exclude=True)
-    # Manter status para compatibilidade com código antigo
+
+    #mannter status para compatibilidade com código antigo
     status: BookingStatus
 
     def __init__(
@@ -44,9 +54,7 @@ class Booking(BaseModel):
         *args,
         **kwargs,
     ):
-        #inicializa com estado Booked
         initial_state = BookedState()
-        
         super().__init__(
             owner_id=owner_id,
             flight_id=flight_id,
@@ -55,55 +63,39 @@ class Booking(BaseModel):
             price=price,
             seat_id=seat_id,
             status=BookingStatus.booked,
-            state=initial_state,  # Adiciona estado
+            state=initial_state,
             *args,
             **kwargs,
         )
 
     def cancel_booking(self) -> bool:
-        """
-        Usa State Pattern para cancelar.
-        O comportamento depende do estado atual.
-        """
+        """Usa State Pattern para cancelar."""
         success = self.state.cancel(self)
-        
-        # Atualiza enum status por compatibilidade
         if success:
             self.status = BookingStatus.cancelled
-        
         return success
 
     def check_in(self) -> bool:
-        """
-        Usa State Pattern para check-in.
-        O comportamento depende do estado atual.
-        """
+        """Usa State Pattern para check-in."""
         success = self.state.check_in(self)
-        
-        # Atualiza enum status por compatibilidade
         if success:
             self.status = BookingStatus.checked_in
-        
         return success
-    
+
     def can_cancel(self) -> bool:
-        """Verifica se pode cancelar no estado atual"""
         return self.state.can_cancel()
-    
+
     def can_check_in(self) -> bool:
-        """Verifica se pode fazer check-in no estado atual"""
         return self.state.can_check_in()
-    
+
     def can_change_seat(self) -> bool:
-        """Verifica se pode mudar assento no estado atual"""
         return self.state.can_change_seat()
 
     def reserve_seat(self, seat_id: int) -> bool:
-        # Verifica se pode mudar assento no estado atual
         if not self.state.can_change_seat():
             print(f"❌ Não é possível mudar assento no estado atual: {self.state.get_status_name()}")
             return False
-        
+
         reserved_seat = self.flight.occupy_seat(booking_id=self.id, seat_id=seat_id)
 
         if reserved_seat is None:
@@ -128,16 +120,11 @@ class Booking(BaseModel):
         return flight
 
     @classmethod
-    def list_customer_bookings(cls, customer_id: customer_id):
-        return list(
-            filter(
-                lambda x: True if x.owner_id == customer_id else False,
-                cls.list(),
-            )
-        )
+    def list_customer_bookings(cls, customer_id: CustomerID):
+        return [x for x in cls.list() if x.owner_id == customer_id]
 
     @classmethod
-    def print_bookings_table(cls, customer_id: customer_id, console: Console):
+    def print_bookings_table(cls, customer_id: CustomerID, console: Console):
         table = Table(title="Bookings")
         table.add_column("Booking")
         table.add_column("Flight")
@@ -149,9 +136,7 @@ class Booking(BaseModel):
         table.add_column("Seat", justify="right", no_wrap=True)
 
         for i in cls.list_customer_bookings(customer_id):
-            #ussa o estado para mostrar status
             status_display = i.state.get_status_name()
-            
             table.add_row(
                 f"{i.id}",
                 f"{i.flight.id}",
@@ -175,9 +160,7 @@ class Booking(BaseModel):
         table.add_column("Status", justify="right", no_wrap=True)
         table.add_column("Seat", justify="right", no_wrap=True)
 
-        #usa o estado para mostrar status
         status_display = self.state.get_status_name()
-        
         table.add_row(
             f"{self.id}",
             f"{self.flight.id}",
@@ -188,5 +171,4 @@ class Booking(BaseModel):
             f"{status_display}",
             f"{self.seat_id}" if self.seat_id else "N/A",
         )
-
         console.print(table)
