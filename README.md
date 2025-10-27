@@ -24,6 +24,23 @@ Sistema de reservas de companhia aérea com interface de linha de comando, imple
 - **Strategy Method e um pouco de Template**: models/flights.py e strategy/
 - **State**: states/ e booking.py
 
+## Padrões Estruturais Implementados
+
+### Decorator Pattern
+- **Localização**: `ycaro_airlines/decorators/`
+- **Uso**: Sistema de pricing dinâmico com extras opcionais
+- **Classes principais**: `BasicFlightPricing`, `SeatSelectionDecorator`, `BaggageDecorator`
+
+### Adapter Pattern
+- **Localização**: `ycaro_airlines/adapters/`
+- **Uso**: Integração com múltiplos sistemas de pagamento
+- **Classes principais**: `PaymentGateway`, `PixAdapter`, `CreditCardAdapter`, `BoletoAdapter`
+
+### Composite Pattern
+- **Localização**: `ycaro_airlines/composites/`
+- **Uso**: Sistema de notificações hierárquico
+- **Classes principais**: `NotificationComponent`, `NotificationGroup`, `NotificationBuilder`
+
 ## Requisitos do Sistema
 
 - Python 3.8+
