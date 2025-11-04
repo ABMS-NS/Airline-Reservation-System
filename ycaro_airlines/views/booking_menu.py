@@ -1,5 +1,5 @@
 """
-Integrada com os 3 padrões estruturais
+Integrada com os 3 padrões estruturais - VERSÃO CORRIGIDA
 """
 from functools import partial
 from typing import Callable, Tuple
@@ -21,6 +21,23 @@ from ycaro_airlines.composites import (
 )
 
 
+def sanitize_text(value: str) -> str | None:
+    """Trim and normalize text inputs. Return None if input isn't a string or is empty after strip."""
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        return None
+    v = value.strip()
+    return v if v != "" else None
+
+
+def is_valid_email(email: str) -> bool:
+    """Validação simples de email"""
+    if not email or not isinstance(email, str):
+        return False
+    return re.fullmatch(r"^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$", email.strip()) is not None
+
+
 def select_seat_action(booking: Booking):
     """Helper para selecionar assento"""
     try:
@@ -39,6 +56,7 @@ def select_seat_action(booking: Booking):
             choices=available_seats
         ).ask()
 
+        seat_input = sanitize_text(seat_input)
         if not seat_input:
             return False
 
@@ -48,6 +66,10 @@ def select_seat_action(booking: Booking):
             return False
 
         # Converter para inteiro e reservar
+        if not seat_input.isdigit():
+            print(f"❌ Seat must be a number: {seat_input}")
+            return False
+
         seat = int(seat_input)
         return booking.reserve_seat(seat)
         
@@ -59,99 +81,6 @@ def select_seat_action(booking: Booking):
         return False
 
 
-def check_in_action(user, booking: Booking):
-    """Ação de check-in básica"""
-    try:
-        # Verificar se usuário está logado
-        if user is None:
-            print("❌ No user logged in!")
-            return False
-            
-        # Verificar propriedade do booking
-        if user.id != booking.owner_id:
-            print("❌ You aren't the owner of this booking!")
-            return False
-
-        # Confirmar nome do passageiro
-        name_confirmation = questionary.text(
-            "Confirm passenger name:"
-        ).ask()
-
-        if not name_confirmation:
-            print("❌ Name confirmation cancelled")
-            return False
-
-        # Validar formato do nome (apenas letras e espaços)
-        if not re.fullmatch(r"^[a-zA-Z ]+$", name_confirmation):
-            print("❌ Invalid name format! Use only letters and spaces")
-            return False
-
-        if name_confirmation != booking.passenger_name:
-            print("❌ Incorrect name!")
-            return False
-
-        # Confirmar CPF do passageiro
-        cpf_confirmation = questionary.text(
-            "Confirm passenger CPF (format: 123.456.789-12):"
-        ).ask()
-
-        if not cpf_confirmation:
-            print("❌ CPF confirmation cancelled")
-            return False
-
-        # Validar formato do CPF
-        if not re.fullmatch(r"^\d{3}\.\d{3}\.\d{3}\-\d{2}$", cpf_confirmation):
-            print("❌ Invalid CPF format! Use: 123.456.789-12")
-            return False
-
-        if cpf_confirmation != booking.passenger_cpf:
-            print("❌ Incorrect CPF!")
-            return False
-
-        # Confirmar check-in
-        confirm_check_in = questionary.confirm(
-            "Are you sure you want to check-in this booking?"
-        ).ask()
-
-        if not confirm_check_in:
-            return False
-
-        # Garantir que tem assento selecionado
-        if booking.seat_id is None:
-            print("⚠️  You need to select a seat first!")
-            if not select_seat_action(booking):
-                print("❌ Check-in cancelled - no seat selected")
-                return False
-
-        # Perguntar se quer mudar de assento
-        confirm_change_seat = questionary.confirm(
-            "Do you want to change seats?"
-        ).ask()
-        
-        if confirm_change_seat:
-            select_seat_action(booking)
-
-        # Realizar check-in
-        if not booking.check_in():
-            print("❌ Couldn't check-in booking")
-            return False
-
-        # Dar pontos de fidelidade
-        if isinstance(user, Customer):
-            points = int(booking.price // 10)
-            user.gain_loyalty_points(points)
-            print(f"✅ You earned {points} loyalty points!")
-
-        return True
-        
-    except ValueError as e:
-        print(f"❌ Invalid value: {e}")
-        return False
-    except Exception as e:
-        print(f"❌ Error during check-in: {e}")
-        return False
-
-
 class BookingMenu(ActionView):
     title: str = "See Bookings"
 
@@ -159,6 +88,16 @@ class BookingMenu(ActionView):
         try:
             if self.user is None:
                 raise ValueError("User must be logged")
+
+            # Defensive check: ensure user has an integer id assigned
+            user_id_attr = getattr(self.user, "id", None)
+            if user_id_attr is None or not isinstance(user_id_attr, int):
+                print("❌ Invalid or missing user id on the current user object")
+                print(f"   user object repr: {repr(self.user)}")
+                print(f"   user.id value: {user_id_attr} (type: {type(user_id_attr)})")
+                print("   Please ensure User/Customer instances are created via the provided constructors so they receive an id.")
+                questionary.press_any_key_to_continue().ask()
+                return self.parent
 
             # Mostrar todas as reservas
             Booking.print_bookings_table(self.user.id, console)
@@ -179,6 +118,7 @@ class BookingMenu(ActionView):
                 choices=[str(i.id) for i in bookings]
             ).ask()
 
+            booking_id = sanitize_text(booking_id)
             if not booking_id or booking_id == "q":
                 return self.parent
 
@@ -232,7 +172,6 @@ class BookingMenu(ActionView):
     def _change_seat(self, booking: Booking):
         """Muda assento do booking"""
         try:
-            # Validações de segurança
             if self.user is None:
                 print("❌ No user logged in!")
                 questionary.press_any_key_to_continue().ask()
@@ -268,14 +207,98 @@ class BookingMenu(ActionView):
         Faz check-in e envia notificações usando COMPOSITE PATTERN
         """
         try:
-            # Realizar check-in
-            success = check_in_action(self.user, booking)
-            
-            if not success:
+            # Verificar se usuário está logado
+            if self.user is None:
+                print("❌ No user logged in!")
+                questionary.press_any_key_to_continue().ask()
+                return
+                
+            # Verificar propriedade do booking
+            if self.user.id != booking.owner_id:
+                print("❌ You aren't the owner of this booking!")
                 questionary.press_any_key_to_continue().ask()
                 return
 
-            # Se check-in foi bem sucedido, oferecer notificações
+            # Confirmar nome do passageiro
+            name_confirmation = questionary.text(
+                "Confirm passenger name:"
+            ).ask()
+
+            name_confirmation = sanitize_text(name_confirmation)
+            if not name_confirmation:
+                print("❌ Name confirmation cancelled or empty")
+                questionary.press_any_key_to_continue().ask()
+                return
+
+            if not re.fullmatch(r"^[a-zA-Z ]+$", name_confirmation):
+                print("❌ Invalid name format! Use only letters and spaces")
+                questionary.press_any_key_to_continue().ask()
+                return
+
+            if name_confirmation != sanitize_text(booking.passenger_name):
+                print("❌ Incorrect name!")
+                questionary.press_any_key_to_continue().ask()
+                return
+
+            # Confirmar CPF do passageiro
+            cpf_confirmation = questionary.text(
+                "Confirm passenger CPF (format: 123.456.789-12):"
+            ).ask()
+
+            cpf_confirmation = sanitize_text(cpf_confirmation)
+            if not cpf_confirmation:
+                print("❌ CPF confirmation cancelled or empty")
+                questionary.press_any_key_to_continue().ask()
+                return
+
+            if not re.fullmatch(r"^\d{3}\.\d{3}\.\d{3}\-\d{2}$", cpf_confirmation):
+                print("❌ Invalid CPF format! Use: 123.456.789-12")
+                questionary.press_any_key_to_continue().ask()
+                return
+
+            if cpf_confirmation != sanitize_text(booking.passenger_cpf):
+                print("❌ Incorrect CPF!")
+                questionary.press_any_key_to_continue().ask()
+                return
+
+            # Confirmar check-in
+            confirm_check_in = questionary.confirm(
+                "Are you sure you want to check-in this booking?"
+            ).ask()
+
+            if not confirm_check_in:
+                questionary.press_any_key_to_continue().ask()
+                return
+
+            # Garantir que tem assento selecionado
+            if booking.seat_id is None:
+                print("⚠️  You need to select a seat first!")
+                if not select_seat_action(booking):
+                    print("❌ Check-in cancelled - no seat selected")
+                    questionary.press_any_key_to_continue().ask()
+                    return
+
+            # Perguntar se quer mudar de assento
+            confirm_change_seat = questionary.confirm(
+                "Do you want to change seats?"
+            ).ask()
+            
+            if confirm_change_seat:
+                select_seat_action(booking)
+
+            # Realizar check-in
+            if not booking.check_in():
+                print("❌ Couldn't check-in booking")
+                questionary.press_any_key_to_continue().ask()
+                return
+
+            # Dar pontos de fidelidade
+            if isinstance(self.user, Customer):
+                points = int(booking.price // 10)
+                self.user.gain_loyalty_points(points)
+                print(f"✅ You earned {points} loyalty points!")
+
+            # Oferecer notificações
             print("\n" + "="*50)
             print("📧 SEND CONFIRMATION (COMPOSITE PATTERN)")
             print("="*50)
@@ -285,6 +308,7 @@ class BookingMenu(ActionView):
             ).ask()
 
             if not send_notif:
+                questionary.press_any_key_to_continue().ask()
                 return
 
             # Escolher canais
@@ -297,14 +321,23 @@ class BookingMenu(ActionView):
                 ]
             ).ask()
 
-            if not channels:
+            if not channels or not isinstance(channels, list):
+                questionary.press_any_key_to_continue().ask()
                 return
 
             # COMPOSITE EM AÇÃO - Construir grupo de notificações
             builder = NotificationBuilder().set_name("Check-in Confirmation")
 
             if "email" in channels:
-                builder.add_email(f"{self.user.username}@example.com")
+                username = sanitize_text(getattr(self.user, 'username', None))
+                if username:
+                    email_addr = f"{username}@example.com"
+                    if is_valid_email(email_addr):
+                        builder.add_email(email_addr)
+                    else:
+                        print(f"⚠️ Skipping invalid generated email: {email_addr}")
+                else:
+                    print("⚠️ No username available to build email; skipping email channel")
             if "sms" in channels:
                 builder.add_sms("+55 82 99999-9999")
             if "push" in channels:
@@ -350,13 +383,22 @@ Have a nice flight! ✈️
             ]
         ).ask()
 
+        channels = channels if isinstance(channels, list) else None
         if not channels:
             return
 
         builder = NotificationBuilder().set_name(title)
 
         if "email" in channels:
-            builder.add_email(f"{self.user.username}@example.com")
+            username = sanitize_text(getattr(self.user, 'username', None))
+            if username:
+                email_addr = f"{username}@example.com"
+                if is_valid_email(email_addr):
+                    builder.add_email(email_addr)
+                else:
+                    print(f"⚠️ Skipping invalid generated email: {email_addr}")
+            else:
+                print("⚠️ No username available to build email; skipping email channel")
         if "sms" in channels:
             builder.add_sms("+55 82 99999-9999")
         if "push" in channels:
@@ -391,7 +433,8 @@ Have a nice flight! ✈️
                 ]
             ).ask()
 
-            if payment_method == "cancel":
+            payment_method = sanitize_text(payment_method)
+            if not payment_method or payment_method == "cancel":
                 return
 
             # Coletar dados conforme método
@@ -404,6 +447,12 @@ Have a nice flight! ✈️
 
             # ADAPTER EM AÇÃO - Criar gateway apropriado
             print("\n⏳ Processing payment...")
+            # validate method before creating gateway
+            if payment_method not in ("pix", "credit_card", "boleto"):
+                print("❌ Unsupported payment method")
+                questionary.press_any_key_to_continue().ask()
+                return
+
             gateway = PaymentGatewayFactory.create_gateway(payment_method)
             
             # Processar (interface unificada!)
@@ -432,67 +481,71 @@ Have a nice flight! ✈️
         try:
             if method == "pix":
                 key = questionary.text("PIX Key (email, phone, or CPF):").ask()
-                
+                key = sanitize_text(key)
                 if not key:
                     print("❌ PIX key is required")
                     return None
-                    
-                return {"pix_key": key, "name": booking.passenger_name}
+
+                # basic validation: if looks like email, validate; else ensure minimal length
+                if "@" in key:
+                    if not is_valid_email(key):
+                        print("❌ Invalid PIX email key")
+                        return None
+                else:
+                    if len(re.sub(r"\D", "", key)) < 6:
+                        print("❌ PIX key looks too short")
+                        return None
+
+                return {"pix_key": key, "name": sanitize_text(booking.passenger_name) or ""}
 
             elif method == "credit_card":
-                # Coletar número do cartão
-                card = questionary.text(
-                    "Card number (16 digits):"
-                ).ask()
-                
+                card = questionary.text("Card number (16 digits):").ask()
+                card = sanitize_text(card)
                 if not card:
                     print("❌ Card number is required")
                     return None
-                
-                # Validar se tem 16 dígitos
-                if len(card) != 16 or not card.isdigit():
+
+                # remove spaces and dashes
+                card_clean = re.sub(r"\s+|-", "", card)
+                if len(card_clean) != 16 or not card_clean.isdigit():
                     print("❌ Invalid card number! Must be 16 digits")
                     return None
-                
-                # Coletar CVV
-                cvv = questionary.text(
-                    "CVV (3 digits):"
-                ).ask()
-                
+
+                cvv = questionary.text("CVV (3 digits):").ask()
+                cvv = sanitize_text(cvv)
                 if not cvv:
                     print("❌ CVV is required")
                     return None
-                
-                # Validar se tem 3 dígitos
+
                 if len(cvv) != 3 or not cvv.isdigit():
                     print("❌ Invalid CVV! Must be 3 digits")
                     return None
-                
-                # Coletar data de validade
-                expiry = questionary.text(
-                    "Expiry date (MM/YY):"
-                ).ask()
-                
+
+                expiry = questionary.text("Expiry date (MM/YY):").ask()
+                expiry = sanitize_text(expiry)
                 if not expiry:
                     print("❌ Expiry date is required")
                     return None
-                
-                # Validar formato MM/YY
+
                 if not re.fullmatch(r"^\d{2}/\d{2}$", expiry):
                     print("❌ Invalid expiry format! Use MM/YY")
                     return None
-                
+
                 return {
-                    "card_number": card,
+                    "card_number": card_clean,
                     "cvv": cvv,
                     "expiry": expiry,
-                    "name": booking.passenger_name
+                    "name": sanitize_text(booking.passenger_name) or ""
                 }
 
             else:  # boleto
+                cpf = sanitize_text(getattr(booking, 'passenger_cpf', None))
+                if not cpf or not re.fullmatch(r"^\d{3}\.\d{3}\.\d{3}\-\d{2}$", cpf):
+                    print("❌ Invalid or missing CPF for boleto")
+                    return None
                 return {
-                    "name": booking.passenger_name,
-                    "cpf": booking.passenger_cpf
+                    "name": sanitize_text(booking.passenger_name) or "",
+                    "cpf": cpf
                 }
                 
         except Exception as e:
@@ -504,13 +557,11 @@ Have a nice flight! ✈️
         Cancela booking e processa reembolso usando ADAPTER
         """
         try:
-            # Verificar se pode cancelar
             if not booking.can_cancel():
                 print(f"❌ Cannot cancel booking in status: {booking.state.get_status_name()}")
                 questionary.press_any_key_to_continue().ask()
                 return
 
-            # Confirmação
             confirm = questionary.confirm(
                 "Are you sure you want to cancel this booking?"
             ).ask()
@@ -540,10 +591,8 @@ Have a nice flight! ✈️
                 print("\n💰 Processing refund...")
                 print("(Using same payment method as original transaction)")
                 
-                # Simular transaction_id
                 transaction_id = f"SIMULATED-{booking.id}"
                 
-                # ADAPTER para reembolso
                 gateway = PaymentGatewayFactory.create_gateway("pix")
                 success = gateway.refund(transaction_id, booking.price)
                 

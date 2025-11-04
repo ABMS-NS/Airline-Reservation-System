@@ -51,8 +51,12 @@ class LoginMenu(MenuView):
     title: str = "Login"
 
     def operation(self) -> UIView | None:
+        # Show actual Customer accounts (subclass instances). User.list() may be
+        # empty because instances are stored in the subclass repositories.
+        from ycaro_airlines.models.customer import Customer as _Customer
+
         choices: list[questionary.Choice] = [
-            questionary.Choice(user.username, user) for user in User.list()
+            questionary.Choice(user.username, user) for user in _Customer.list()
         ]
 
         choices.append(questionary.Choice(title="Go Back", value=self.parent))
@@ -79,8 +83,9 @@ class SignupAction(ActionView):
         username = questionary.text(
             "Username:",
             default="",
+            # ensure uniqueness among Customer usernames
             validate=lambda x: (
-                True if x not in {v.username for v in User.list()} else False
+                True if x not in {v.username for v in Customer.list()} else False
             ),
         ).ask()
 

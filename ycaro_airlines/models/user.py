@@ -15,10 +15,7 @@ class User(BaseModel):
     username: str
     # email: str
     role: Roles | None = None
-    repostitory: ClassVar[ModelRepository] = ModelRepository["User"]()
-
-    def __init_subclass__(cls, **kwargs: Unpack[pydantic.ConfigDict]):
-        cls.repository = cls.repository
+    # repository will be provided by BaseModel.__init_subclass__
 
     def __init__(self, username: str, *args, **kwargs) -> None:
         super().__init__(username=username, *args, **kwargs)
