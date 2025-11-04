@@ -41,8 +41,8 @@ def book_flight_action(user: User):
         if re.fullmatch(r"^\d{3}\.\d{3}\.\d{3}\-\d{2}$", x)
         else False,
     ).ask()
-    if not passenger_name or not passenger_cpf:
-        print("Operation Cancelled")
+    if not passenger_name or not passenger_cpf or passenger_name.strip() == "" or passenger_cpf.strip() == "":
+        print("Operation Cancelled because name or cpf were invalid")
         return
 
     # voce quer comprar essa passagem

@@ -32,10 +32,23 @@ def sanitize_text(value: str) -> str | None:
 
 
 def is_valid_email(email: str) -> bool:
-    """Validação simples de email"""
+    """Validação simples de email: exige exatamente um '@' não no início nem no fim."""
     if not email or not isinstance(email, str):
         return False
-    return re.fullmatch(r"^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$", email.strip()) is not None
+
+    email = email.strip()
+
+    # Deve conter exatamente um '@' e não pode estar no início nem no fim
+    if email.count('@') != 1:
+        print("email inválido, continuando a operação sem o mesmo")
+        return False
+    if email.startswith('@') or email.endswith('@'):
+        print("email inválido, continuando a operação sem o mesmo")
+        return False
+        
+    
+
+    return True
 
 
 def select_seat_action(booking: Booking):

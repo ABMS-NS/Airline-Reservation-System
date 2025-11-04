@@ -34,9 +34,15 @@ def signup_action():
             True if x not in {v.username for v in Customer.list()} else False
         ),
     ).ask()
-    Customer(username=username)
-    print("Sign Up Successful!")
+    try:
+        if username is None or username.strip() == "":
+            raise ValueError("Username cannot be empty")
+        else:
+            Customer(username=username)
+            print("Sign Up Successful!")
 
+    except Exception as e:
+        print(f"Sign Up Failed: {e}")
 
 def accounts_menu():
     options: list[Tuple[str, Callable]] = [
@@ -89,10 +95,15 @@ class SignupAction(ActionView):
             ),
         ).ask()
 
-        Customer(username=username)
+        try:
+            if username is None or username.strip() == "":
+                raise ValueError("Username cannot be empty")
+            else:
+                Customer(username=username)
+                print("Sign Up Successful!")
 
-        print("Sign Up Successful!")
-        print(User.list())
+        except Exception as e:
+            print(f"Sign Up Failed: {e}")
 
         return self.parent
 
