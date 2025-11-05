@@ -41,6 +41,20 @@ Sistema de reservas de companhia aérea com interface de linha de comando, imple
 - **Uso**: Sistema de notificações hierárquico
 - **Classes principais**: `NotificationComponent`, `NotificationGroup`, `NotificationBuilder`
 
+## Padrões Criacionais Implementados
+
+### Factory Method Pattern
+- **Localização**: `ycaro_airlines/factories/`
+- **Uso**: Criação de diferentes tipos de usuários e ações do sistema
+
+### Builder Pattern
+- **Localização**: `ycaro_airlines/builders/`
+- **Uso**: Construção de objetos complexos como reservas e consultas de voo
+
+### Singleton Pattern
+- **Localização**: `ycaro_airlines/models/model_database.py`
+- **Uso**: Repositório único por tipo de modelo para gerenciamento de dados
+
 ## Arquivos com Tratamento de Erros
 
 ### ycaro_airlines/views/booking_menu.py
