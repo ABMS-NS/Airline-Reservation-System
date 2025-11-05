@@ -143,9 +143,6 @@ Ganhar pontos negativos: if amount < 0: raise ValueError
 Gastar mais pontos que possui: if amount > self.points: raise ValueError
 
 
-
-
-
 ### ycaro_airlines/adapters/payment_adapters.py
 
 **ValueError em Factory:**
