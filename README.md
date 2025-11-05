@@ -41,6 +41,129 @@ Sistema de reservas de companhia aérea com interface de linha de comando, imple
 - **Uso**: Sistema de notificações hierárquico
 - **Classes principais**: `NotificationComponent`, `NotificationGroup`, `NotificationBuilder`
 
+## Arquivos com Tratamento de Erros
+
+### ycaro_airlines/views/booking_menu.py
+
+**Try-Catch Genérico: Captura exceções inesperadas no fluxo principal**
+
+Por quê: Evita crashes do sistema e fornece feedback ao usuário
+Exemplo: Erros durante carregamento de bookings ou operações de menu
+
+
+**Validação de Entrada com sanitize_text():**
+
+Por quê: Previne dados malformados (strings vazias, None, espaços)
+Exemplo: Validação de IDs de booking, nomes, emails
+
+
+**Validação de Estado de Objetos:**
+
+Por quê: Garante que objetos têm dados válidos antes de operações
+Exemplo: Verifica se user.id existe e é inteiro válido antes de buscar bookings
+
+
+**Validação de Permissões:**
+
+Por quê: Segurança - usuários só podem modificar suas próprias reservas
+Exemplo: Verifica booking.owner_id == user.id antes de operações
+
+
+**Validação de Regras de Negócio:**
+
+Por quê: Respeita regras do State Pattern (ex: não pode cancelar após check-in)
+Exemplo: Chama booking.can_cancel() antes de permitir cancelamento
+
+
+**Validação de Formatos com Regex:**
+
+Por quê: Garante dados em formatos corretos (CPF, email, cartão de crédito)
+Exemplo: CPF deve seguir padrão \d{3}\.\d{3}\.\d{3}\-\d{2}
+
+
+**AttributeError Específico:**
+
+Por quê: Detecta corrupção de dados ou problemas de serialização
+Exemplo: Captura quando atributos esperados não existem em objetos
+
+
+
+### ycaro_airlines/views/actions/booking/book_flight_action.py
+
+**Validação de Tipo de Usuário:**
+
+Por quê: Apenas clientes podem fazer reservas
+Exemplo: isinstance(self.user, Customer)
+
+
+**Validação de Input com Questionary:**
+
+Por quê: Garante que usuário escolhe opções válidas
+Exemplo: Validadores customizados em questionary.text(validate=...)
+
+
+**Try-Catch em Operações de Pagamento:**
+
+Por quê: Falhas de pagamento não devem quebrar o fluxo de reserva
+Exemplo: Captura erros do PaymentGateway e informa usuário
+
+
+**Validação de Disponibilidade:**
+
+Por quê: Previne reserva de assentos já ocupados
+Exemplo: Filtra seats por status SeatStatus.open
+
+
+
+### ycaro_airlines/models/flight.py 
+
+**ValueError para Validações de Negócio:**
+
+Por quê: Impede criação de voos com dados inválidos
+Exemplos:
+
+Capacidade negativa: if capacity < 0: raise ValueError
+Data de partida no passado: if departure_date < datetime.today(): raise ValueError
+Chegada antes da partida: if arrival_date < departure_date: raise ValueError
+Preço negativo: if price < 0: raise ValueError
+
+
+
+
+
+4. ycaro_airlines/models/customer.py
+Tipos de Tratamento:
+
+ValueError em Operações de Pontos:
+
+Por quê: Previne operações inválidas no sistema de fidelidade
+Exemplos:
+
+Ganhar pontos negativos: if amount < 0: raise ValueError
+Gastar mais pontos que possui: if amount > self.points: raise ValueError
+
+
+
+
+
+### ycaro_airlines/adapters/payment_adapters.py
+
+**ValueError em Factory:**
+
+Por quê: Garante que apenas métodos de pagamento suportados sejam usados
+Exemplo: if not gateway_class: raise ValueError(f"Tipo de pagamento desconhecido")
+
+
+
+### ycaro_airlines/models/base_model.py
+
+**Try-Catch em Migração de Dados:**
+
+Por quê: Evita falhas durante migração de repositórios antigos
+Exemplo: try: del repo.data[item_id] except Exception: pass
+
+
+
 ## Requisitos do Sistema
 
 - Python 3.8+
