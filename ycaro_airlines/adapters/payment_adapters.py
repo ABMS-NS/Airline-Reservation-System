@@ -1,6 +1,4 @@
 """
-ycaro_airlines/adapters/payment_adapters.py
-
 Adapter Pattern para Integração de Sistemas de Pagamento
 Permite usar diferentes gateways com interface unificada
 """

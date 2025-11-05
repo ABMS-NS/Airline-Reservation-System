@@ -128,13 +128,9 @@ Chegada antes da partida: if arrival_date < departure_date: raise ValueError
 Preço negativo: if price < 0: raise ValueError
 
 
+### ycaro_airlines/models/customer.py
 
-
-
-4. ycaro_airlines/models/customer.py
-Tipos de Tratamento:
-
-ValueError em Operações de Pontos:
+**ValueError em Operações de Pontos**
 
 Por quê: Previne operações inválidas no sistema de fidelidade
 Exemplos:
@@ -149,7 +145,6 @@ Gastar mais pontos que possui: if amount > self.points: raise ValueError
 
 Por quê: Garante que apenas métodos de pagamento suportados sejam usados
 Exemplo: if not gateway_class: raise ValueError(f"Tipo de pagamento desconhecido")
-
 
 
 ### ycaro_airlines/models/base_model.py
@@ -227,27 +222,6 @@ python main.py
 4. "Redeem Points for Rewards" - resgatar prêmios
 
 ## Arquitetura do Projeto
-
-### Estrutura de Pastas
-```
-ycaro-airlines/
-├── main.py                    # Ponto de entrada
-├── ycaro_airlines/
-│   ├── app.py                # Aplicação principal
-│   ├── models/               # Modelos de dados
-│   │   ├── base_model.py     # Classe base
-│   │   ├── user.py           # Usuários
-│   │   ├── customer.py       # Clientes
-│   │   ├── flight.py         # Voos
-│   │   ├── booking.py        # Reservas
-│   │   └── loyalty.py        # Sistema de fidelidade
-│   └── views/                # Interface do usuário
-│       ├── menu.py           # Classes base de menu
-│       ├── account_menus.py  # Login/cadastro
-│       ├── customer_menu.py  # Menu principal
-│       ├── loyalty_menu.py   # Menu de fidelidade
-│       └── actions/          # Ações específicas
-```
 
 ### Padrões de Design Utilizados
 - **Repository Pattern**: Gerenciamento de dados em memória
